@@ -133,7 +133,7 @@ if __name__ == '__main__':
     #print (Ottelut)
     print (kerroin(wins, draws, losses, opp_wins, opp_draws, opp_losses))
     #print(palautusprosentti(1.548387, 5.3333333, 5.9999999))
-    print("tää on joku testi")
+
 
 
 
