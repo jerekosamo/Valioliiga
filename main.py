@@ -1,16 +1,11 @@
 
 import requests
 from scipy.stats import poisson
+import tkinter as tk
 
-
-class Joukkue:
-    def __init__(self, nimi, pisteet, tmaalit, pmaalit):
-        self.nimi = nimi
-        self.pisteet = pisteet
-        self.tmaalit = tmaalit
-        self.pmaalit = pmaalit
 
 def palautusprosentti(koti, tasapeli, vieras):
+    #Jos luvut ovat kertoimia eli yli 1.00, niillä jaetaan ykköstä. JOs luvut prosentteina ne lisätään yhteen
     if koti > 1:
         x = (1/koti) + (1/tasapeli) + (1/vieras)
     else:
@@ -26,97 +21,85 @@ def lambda_pisteet(pelit, pisteet):
     kerroin = pisteet / pelit
     return kerroin
 
-def kerroin(h_win, h_tie, h_loss, v_win, v_tie, v_loss):
-    h_matches = (h_win + h_tie + h_loss)
-    v_matches = (v_win + v_tie + v_loss)
-    h_win_factor = h_win / h_matches
-    h_tie_factor = h_tie / h_matches
-    h_loss_factor = h_loss / h_matches
-    v_win_factor = v_win / v_matches
-    v_tie_factor = v_tie / v_matches
-    v_loss_factor = v_loss / v_matches
-    #print(h_tie, v_tie)
-    #print(h_win,v_win, h_loss, v_loss)
-    #print(h_tie_factor,v_tie_factor)
-    h_factor = 1 / ((h_win_factor + v_loss_factor) / 2)
-    v_factor = 1 / ((h_loss_factor + v_win_factor) / 2)
-    t_factor = 1 / ((h_tie_factor + v_tie_factor) / 2)
-    #t_factor = 1 / (1 - (((h_loss_factor + v_win_factor) / 2) + ((h_win_factor + v_loss_factor) / 2)))
-    return (h_factor, t_factor, v_factor)
+def poisson_kertoimet(lambda_home, lambda_away):
+    # Calculate the probability of each team scoring a specific number of goals
+    prob_home = [poisson.pmf(i, lambda_home) for i in range(6)]
+    prob_away = [poisson.pmf(i, lambda_away) for i in range(6)]
 
+    # Calculate the probability of each scoreline
+    scorelines = [[i, j] for i in range(6) for j in range(6)]
+    scoreline_probabilities = [prob_home[i] * prob_away[j] for i, j in scorelines]
+
+    # Calculate the probability of each outcome
+    team1_wins = sum(
+        [scoreline_probabilities[i] for i in range(len(scorelines)) if scorelines[i][0] > scorelines[i][1]])
+    draw = sum([scoreline_probabilities[i] for i in range(len(scorelines)) if scorelines[i][0] == scorelines[i][1]])
+    team2_wins = sum(
+        [scoreline_probabilities[i] for i in range(len(scorelines)) if scorelines[i][0] < scorelines[i][1]])
+
+    # Normalize the probabilities
+    total_probability = team1_wins + team2_wins + draw
+    team1_win_prob = team1_wins / total_probability
+    team2_win_prob = team2_wins / total_probability
+    draw_prob = draw / total_probability
+
+    # Print the probabilities
+    #print(f"Team 1 win probability: {team1_win_prob:.2%}", round(1 / team1_win_prob, 2))
+    #print(f"Team 2 win probability: {team2_win_prob:.2%}", round(1 / team2_win_prob, 2))
+    #print(f"Draw probability: {draw_prob:.2%}", round(1 / draw_prob, 2))
+
+    return (team1_win_prob, draw_prob, team2_win_prob)
+
+def poisson_kertoimet_pisteet(lambda_home, lambda_away):
+    # Calculate the probability of each team scoring a specific number of goals
+    prob_home_p = [poisson.pmf(i, lambda_home) for i in range(4)]
+    prob_away_p = [poisson.pmf(i, lambda_away) for i in range(4)]
+
+    # Calculate the probability of each scoreline
+    scorelines_p = [[i, j] for i in range(4) for j in range(4)]
+    scoreline_probabilities_p = [prob_home_p[i] * prob_away_p[j] for i, j in scorelines_p]
+
+    # Calculate the probability of each outcome
+    team1_wins_p = sum(
+        [scoreline_probabilities_p[i] for i in range(len(scorelines_p)) if scorelines_p[i][0] > scorelines_p[i][1]])
+    draw_p = sum([scoreline_probabilities_p[i] for i in range(len(scorelines_p)) if scorelines_p[i][0] == scorelines_p[i][1]])
+    team2_wins_p = sum(
+        [scoreline_probabilities_p[i] for i in range(len(scorelines_p)) if scorelines_p[i][0] < scorelines_p[i][1]])
+
+    # Normalize the probabilities
+    total_probability_p = team1_wins_p + team2_wins_p + draw_p
+    team1_win_prob_p = team1_wins_p / total_probability_p
+    team2_win_prob_p = team2_wins_p / total_probability_p
+    draw_prob_p = draw_p / total_probability_p
+
+    # Print the probabilities
+    # print(f"Team 1 win probability: {team1_win_prob:.2%}", round(1 / team1_win_prob, 2))
+    # print(f"Team 2 win probability: {team2_win_prob:.2%}", round(1 / team2_win_prob, 2))
+    # print(f"Draw probability: {draw_prob:.2%}", round(1 / draw_prob, 2))
+
+    return (team1_win_prob_p, draw_prob_p, team2_win_prob_p)
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    Arsenal = Joukkue("Arsenal FC", 50, 45, 16)
-    ManC = Joukkue("Manchester City FC", 45, 53, 20)
-    Newcastle = Joukkue("Newcastle United FC", 39, 33, 11)
-    ManU = Joukkue("Manchester United FC", 39, 32, 25)
-    Tottenham = Joukkue("Tottenham Hotspur FC", 36, 40, 31)
-    Brighton = Joukkue("Brighton & Hove Albion FC", 31, 37, 27)
-    Fulham = Joukkue("Fulham FC", 31, 32, 30)
-    Brentford = Joukkue("Brentford FC", 30, 32, 28)
-    Liverpool = Joukkue("Liverpool FC", 29, 34, 25)
-    Chelsea = Joukkue("Chelsea FC", 29, 22, 21)
-    AstonVilla = Joukkue("Aston Villa FC", 28, 23, 27)
-    CrystalPalace = Joukkue("Crystal Palace FC", 24, 18, 27)
-    Nottingham = Joukkue("Nottingham Forest FC", 21, 16, 35)
-    Leicester = Joukkue("Leicester City FC", 18, 28, 35)
-    Leeds = Joukkue("Leeds United FC", 18, 26, 33)
-    Westham = Joukkue("West Ham United FC", 18, 17, 25)
-    wolves = Joukkue("Wolverhampton Wanderers FC", 17, 12, 30)
-    Bournemouth = Joukkue("AFC Bournemouth", 17, 19, 42)
-    Everton = Joukkue("Everton FC", 15, 15, 28)
-    Southampton = Joukkue("Southampton FC", 15, 17, 35)
-    #print((ManU.tmaalit) - (ManC.pmaalit))
 
-    # # Define the lambda values for each team
-    # team1_lambda = 0.725  # expected goals scored per match for team 1 / expected goals conceded per match
-    # team2_lambda = 1.48  # expected goals scored per match for team 2 / expected goals conceded per match
-    #
-    # # Calculate the probability of each team scoring a specific number of goals
-    # team1_goals = [poisson.pmf(i, team1_lambda) for i in range(6)]
-    # team2_goals = [poisson.pmf(i, team2_lambda) for i in range(6)]
-    #
-    # # Calculate the probability of each scoreline
-    # scorelines = [[i, j] for i in range(6) for j in range(6)]
-    # scoreline_probabilities = [team1_goals[i] * team2_goals[j] for i, j in scorelines]
-    #
-    # # Calculate the probability of each outcome
-    # team1_wins = sum(
-    #     [scoreline_probabilities[i] for i in range(len(scorelines)) if scorelines[i][0] > scorelines[i][1]])
-    # team2_wins = sum(
-    #     [scoreline_probabilities[i] for i in range(len(scorelines)) if scorelines[i][0] < scorelines[i][1]])
-    # draw = sum([scoreline_probabilities[i] for i in range(len(scorelines)) if scorelines[i][0] == scorelines[i][1]])
-    #
-    # # Normalize the probabilities
-    # total_probability = team1_wins + team2_wins + draw
-    # team1_win_prob = team1_wins / total_probability
-    # team2_win_prob = team2_wins / total_probability
-    # draw_prob = draw / total_probability
-    #
-    # # Print the probabilities
-    # print(f"Team 1 win probability: {team1_win_prob:.2%}")
-    # print(f"Team 2 win probability: {team2_win_prob:.2%}")
-    # print(f"Draw probability: {draw_prob:.2%}")
+    f = open("matches.txt", "w")
 
-    # Print the probabilities of each scoreline
-    #for scoreline, probability in zip(scorelines, scoreline_probabilities):
-        #print(f"{scoreline[0]}-{scoreline[1]}: {probability:.2%}")
-
-    uri = 'https://api.football-data.org/v4/competitions/PL/matches?matchday=28'
+    uri = 'https://api.football-data.org/v4/competitions/PL/matches?matchday=36'
     uri1 = 'https://api.football-data.org/v4/competitions/PL/standings?type=TOTAL'
     headers = {'X-Auth-Token': '74c7b6e85a8b49a9991a4b0a0158d38f'}
 
-    wins = 0
-    draws = 0
-    losses = 0
-    opp_wins = 0
-    opp_draws = 0
-    opp_losses = 0
     games = 0
     goals = 0
     conceded = 0
     points = 0
+    points_home = 0
+    games_home = 0
+    goals_home = 0
+    conceded_home = 0
+    points_away = 0
+    games_away = 0
+    goals_away = 0
+    conceded_away = 0
     opp_games = 0
     opp_goals = 0
     opp_conceded = 0
@@ -143,86 +126,121 @@ if __name__ == '__main__':
                     maalit = team_data['goalsFor']
                     paastetyt = team_data['goalsAgainst']
                     pelit = team_data['playedGames']
-                    voitot = team_data['won']
-                    tasapelit = team_data['draw']
-                    tappiot = team_data['lost']
 
                     if home_team == team_name:
-                        wins = voitot
-                        draws = tasapelit
-                        losses = tappiot
                         games = pelit
                         goals = maalit
                         conceded = paastetyt
                         points = pisteet
                     if away_team == team_name:
-                        opp_wins = voitot
-                        opp_draws = tasapelit
-                        opp_losses = tappiot
                         opp_games = pelit
                         opp_goals = maalit
                         opp_conceded = paastetyt
                         opp_points = pisteet
 
+             if standing['type'] == 'HOME':
+                table_data_home = standing['table']
+                for team_data in table_data_home:
+                    team_name = team_data['team']['name']
+
+                    maalit_koti = team_data['goalsFor']
+                    paastetyt_koti = team_data['goalsAgainst']
+                    pelit_koti = team_data['playedGames']
+                    pisteet_koti = team_data['points']
+
+                    if home_team == team_name:
+                        games_home = pelit_koti
+                        goals_home = maalit_koti
+                        conceded_home = paastetyt_koti
+                        points_home = pisteet_koti
+
+             if standing['type'] == 'AWAY':
+                table_data_away = standing['table']
+                for team_data in table_data_away:
+                    team_name = team_data['team']['name']
+
+                    maalit_vieras = team_data['goalsFor']
+                    paastetyt_vieras = team_data['goalsAgainst']
+                    pelit_vieras = team_data['playedGames']
+                    pisteet_vieras = team_data['points']
+
+                    if away_team == team_name:
+                        games_away = pelit_vieras
+                        goals_away = maalit_vieras
+                        conceded_away = paastetyt_vieras
+                        points_away = pisteet_vieras
 
 
-                 # print(f"{team_name}: {goal_difference}")
-        print(home_team,' vs ', away_team)
-        #print(kerroin(wins, draws, losses, opp_wins, opp_draws, opp_losses))
-
-        team1_lambda = lambda_kerroin(games, goals, conceded)
-        team2_lambda = lambda_kerroin(opp_games, opp_goals, opp_conceded)
-        team1_lambda_points = lambda_pisteet(games, points)
-        team2_lambda_points = lambda_pisteet(opp_games, opp_points)
-        # Calculate the probability of each team scoring a specific number of goals
-        team1_goals = [poisson.pmf(i, team1_lambda) for i in range(6)]
-        team2_goals = [poisson.pmf(i, team2_lambda) for i in range(6)]
-        team1_points = [poisson.pmf(i, team1_lambda_points) for i in range(6)]
-        team2_points = [poisson.pmf(i, team2_lambda_points) for i in range(6)]
-
-        # Calculate the probability of each scoreline
-        scorelines = [[i, j] for i in range(6) for j in range(6)]
-        scoreline_probabilities = [team1_goals[i] * team2_goals[j] for i, j in scorelines]
-        scorelines_points = [[i, j] for i in range(6) for j in range(6)]
-        scoreline_probabilities_points = [team1_points[i] * team2_points[j] for i, j in scorelines_points]
-
-        # Calculate the probability of each outcome
-        team1_wins = sum(
-            [scoreline_probabilities[i] for i in range(len(scorelines)) if scorelines[i][0] > scorelines[i][1]])
-        team2_wins = sum(
-            [scoreline_probabilities[i] for i in range(len(scorelines)) if scorelines[i][0] < scorelines[i][1]])
-        draw = sum([scoreline_probabilities[i] for i in range(len(scorelines)) if scorelines[i][0] == scorelines[i][1]])
-
-        team1_wins_points = sum(
-            [scoreline_probabilities_points[i] for i in range(len(scorelines_points)) if scorelines_points[i][0] > scorelines_points[i][1]])
-        team2_wins_points = sum(
-            [scoreline_probabilities_points[i] for i in range(len(scorelines_points)) if scorelines_points[i][0] < scorelines_points[i][1]])
-        draw_points = sum([scoreline_probabilities_points[i] for i in range(len(scorelines_points)) if scorelines_points[i][0] == scorelines_points[i][1]])
-
-        # Normalize the probabilities
-        total_probability = team1_wins + team2_wins + draw
-        team1_win_prob = team1_wins / total_probability
-        team2_win_prob = team2_wins / total_probability
-        draw_prob = draw / total_probability
-
-        total_probability_points = team1_wins_points + team2_wins_points + draw_points
-        team1_win_prob_points = team1_wins_points / total_probability_points
-        team2_win_prob_points = team2_wins_points / total_probability_points
-        draw_prob_points = draw_points / total_probability_points
-
-        # Print the probabilities
-        print(f"Team 1 win probability: {team1_win_prob:.2%}", round(1 / team1_win_prob, 2))
-        print(f"Team 2 win probability: {team2_win_prob:.2%}", round(1 / team2_win_prob, 2))
-        print(f"Draw probability: {draw_prob:.2%}", round(1 / draw_prob, 2))
-
-        print(f"Team 1 win probability: {team1_win_prob_points:.2%}", round(1 / team1_win_prob_points, 2))
-        print(f"Team 2 win probability: {team2_win_prob_points:.2%}", round(1 / team2_win_prob_points, 2))
-        print(f"Draw probability: {draw_prob_points:.2%}", round(1 / draw_prob_points, 2))
 
 
-    #print (Ottelut)
-    #print (kerroin(wins, draws, losses, opp_wins, opp_draws, opp_losses))
-    #print(palautusprosentti(1.548387, 5.3333333, 5.9999999))
+
+        #print(home_team,' vs ', away_team)
+
+        #team1_lambda = lambda_kerroin(games, goals, conceded)
+        #team2_lambda = lambda_kerroin(opp_games, opp_goals, opp_conceded)
+        #team1_lambda_points = lambda_pisteet(games, points)
+        #team2_lambda_points = lambda_pisteet(opp_games, opp_points)
+        team1_lambda_points = lambda_pisteet(games_home, points_home)
+        team2_lambda_points = lambda_pisteet(games_away, points_away)
+        team1_lambda_koti = lambda_kerroin(games_home,goals_home, conceded_home)
+        team2_lambda_vieras = lambda_kerroin(games_away,goals_away, conceded_away)
+
+
+
+        #a = (round(1 / ((poisson_kertoimet(team1_lambda,team2_lambda)[0] + poisson_kertoimet(team1_lambda_points, team2_lambda_points)[0]) / 2), 2 ))
+        #b = (round( 1 / ((poisson_kertoimet(team1_lambda, team2_lambda)[1] +
+               #poisson_kertoimet(team1_lambda_points, team2_lambda_points)[1]) / 2), 2))
+        #c = (round( 1 / ((poisson_kertoimet(team1_lambda, team2_lambda)[2] +
+               #poisson_kertoimet(team1_lambda_points, team2_lambda_points)[2]) / 2), 2))
+        a = (round(1 / ((poisson_kertoimet(team1_lambda_koti, team2_lambda_vieras)[0] +
+                         poisson_kertoimet_pisteet(team1_lambda_points, team2_lambda_points)[0]) / 2), 2))
+        b = (round(1 / ((poisson_kertoimet(team1_lambda_koti, team2_lambda_vieras)[1] +
+                         poisson_kertoimet_pisteet(team1_lambda_points, team2_lambda_points)[1]) / 2), 2))
+        c = (round(1 / ((poisson_kertoimet(team1_lambda_koti, team2_lambda_vieras)[2] +
+                         poisson_kertoimet_pisteet(team1_lambda_points, team2_lambda_points)[2]) / 2), 2))
+        mylist = [home_team, away_team, str(a), str(b), str(c)]
+        for i in range(len(mylist)):
+            mylist[i] += "\n"
+        f.writelines(mylist)
+
+
+    f.close()
+
+    # create a new window
+    root = tk.Tk()
+
+
+    # Create header for the file
+    font = ("Helvetica", 16, "bold")
+    header_info = "Ottelut peliviikko: 35 (1 / x / 2)"
+    tk.Label(root, text=header_info, font=font).pack()
+
+    # create a label for each match
+    with open("matches.txt", "r") as f:
+        i = 0
+        for line in f:
+            if i % 5 == 0:
+                home_team = line.strip()
+            elif i % 5 == 1:
+                away_team = line.strip()
+            elif i % 5 == 2:
+                home_win = float(line.strip())
+            elif i % 5 == 3:
+                draw = float(line.strip())
+            elif i % 5 == 4:
+                away_win = float(line.strip())
+
+                # create a label with the match information
+                match_info = f"{home_team} vs {away_team}: {home_win} / {draw} / {away_win}"
+                tk.Label(root, text=match_info).pack()
+
+            i += 1
+
+    # run the window
+    root.mainloop()
+
+
+
 
 
 
