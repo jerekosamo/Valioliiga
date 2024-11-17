@@ -18,6 +18,7 @@ def lambda_kerroin(games, goals, conceded):
     return kerroin
 
 def lambda_pisteet(pelit, pisteet):
+    print(pisteet, pelit)
     kerroin = pisteet / pelit
     return kerroin
 
@@ -84,8 +85,8 @@ if __name__ == '__main__':
 
     f = open("matches.txt", "w")
 
-    uri = 'https://api.football-data.org/v4/competitions/PL/matches?matchday=36'
-    uri1 = 'https://api.football-data.org/v4/competitions/PL/standings?type=TOTAL'
+    uri = 'https://api.football-data.org/v4/competitions/PL/matches?matchday=12'
+    uri1 = 'https://api.football-data.org/v4/competitions/PL/standings?season=2024'
     headers = {'X-Auth-Token': '74c7b6e85a8b49a9991a4b0a0158d38f'}
 
     games = 0
@@ -116,13 +117,15 @@ if __name__ == '__main__':
         home_team = match_data['homeTeam']['name']
         away_team = match_data['awayTeam']['name']
         for standing in response1.json()['standings']:
-             #print (standing)
+             print(standing)
              if standing['type'] == 'TOTAL':
+                #print(standing)
                 table_data = standing['table']
                 for team_data in table_data:
                     team_name = team_data['team']['name']
                     goal_difference = team_data['goalDifference']
                     pisteet = team_data['points']
+                    #print(pisteet)
                     maalit = team_data['goalsFor']
                     paastetyt = team_data['goalsAgainst']
                     pelit = team_data['playedGames']
@@ -139,6 +142,7 @@ if __name__ == '__main__':
                         opp_points = pisteet
 
              if standing['type'] == 'HOME':
+                #print(standing)
                 table_data_home = standing['table']
                 for team_data in table_data_home:
                     team_name = team_data['team']['name']
@@ -180,8 +184,8 @@ if __name__ == '__main__':
         #team2_lambda = lambda_kerroin(opp_games, opp_goals, opp_conceded)
         #team1_lambda_points = lambda_pisteet(games, points)
         #team2_lambda_points = lambda_pisteet(opp_games, opp_points)
-        team1_lambda_points = lambda_pisteet(games_home, points_home)
-        team2_lambda_points = lambda_pisteet(games_away, points_away)
+        #team1_lambda_points = lambda_pisteet(games_home, points_home)
+        #team2_lambda_points = lambda_pisteet(games_away, points_away)
         team1_lambda_koti = lambda_kerroin(games_home,goals_home, conceded_home)
         team2_lambda_vieras = lambda_kerroin(games_away,goals_away, conceded_away)
 
@@ -189,15 +193,15 @@ if __name__ == '__main__':
 
         #a = (round(1 / ((poisson_kertoimet(team1_lambda,team2_lambda)[0] + poisson_kertoimet(team1_lambda_points, team2_lambda_points)[0]) / 2), 2 ))
         #b = (round( 1 / ((poisson_kertoimet(team1_lambda, team2_lambda)[1] +
-               #poisson_kertoimet(team1_lambda_points, team2_lambda_points)[1]) / 2), 2))
+         #      poisson_kertoimet(team1_lambda_points, team2_lambda_points)[1]) / 2), 2))
         #c = (round( 1 / ((poisson_kertoimet(team1_lambda, team2_lambda)[2] +
-               #poisson_kertoimet(team1_lambda_points, team2_lambda_points)[2]) / 2), 2))
-        a = (round(1 / ((poisson_kertoimet(team1_lambda_koti, team2_lambda_vieras)[0] +
-                         poisson_kertoimet_pisteet(team1_lambda_points, team2_lambda_points)[0]) / 2), 2))
-        b = (round(1 / ((poisson_kertoimet(team1_lambda_koti, team2_lambda_vieras)[1] +
-                         poisson_kertoimet_pisteet(team1_lambda_points, team2_lambda_points)[1]) / 2), 2))
-        c = (round(1 / ((poisson_kertoimet(team1_lambda_koti, team2_lambda_vieras)[2] +
-                         poisson_kertoimet_pisteet(team1_lambda_points, team2_lambda_points)[2]) / 2), 2))
+         #      poisson_kertoimet(team1_lambda_points, team2_lambda_points)[2]) / 2), 2))
+        a = (round(1 / (poisson_kertoimet(team1_lambda_koti, team2_lambda_vieras)[0]),2))
+                         # + poisson_kertoimet_pisteet(team1_lambda_points, team2_lambda_points)[0]) / 2), 2))
+        b = (round(1 / (poisson_kertoimet(team1_lambda_koti, team2_lambda_vieras)[1]),2))
+                         # + poisson_kertoimet_pisteet(team1_lambda_points, team2_lambda_points)[1]) / 2), 2))
+        c = (round(1 / (poisson_kertoimet(team1_lambda_koti, team2_lambda_vieras)[2]),2))
+                         # + poisson_kertoimet_pisteet(team1_lambda_points, team2_lambda_points)[2]) / 2), 2))
         mylist = [home_team, away_team, str(a), str(b), str(c)]
         for i in range(len(mylist)):
             mylist[i] += "\n"
@@ -212,7 +216,7 @@ if __name__ == '__main__':
 
     # Create header for the file
     font = ("Helvetica", 16, "bold")
-    header_info = "Ottelut peliviikko: 35 (1 / x / 2)"
+    header_info = "Ottelut peliviikko: 12 (1 / x / 2)"
     tk.Label(root, text=header_info, font=font).pack()
 
     # create a label for each match
