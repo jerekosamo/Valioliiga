@@ -2,6 +2,7 @@
 import requests
 from scipy.stats import poisson
 import tkinter as tk
+import Keys
 
 
 def palautusprosentti(koti, tasapeli, vieras):
@@ -87,7 +88,7 @@ if __name__ == '__main__':
 
     uri = 'https://api.football-data.org/v4/competitions/PL/matches?matchday=12'
     uri1 = 'https://api.football-data.org/v4/competitions/PL/standings?season=2024'
-    headers = {'X-Auth-Token': '74c7b6e85a8b49a9991a4b0a0158d38f'}
+    headers = {'X-Auth-Token': Keys.API_KEY}
 
     games = 0
     goals = 0
